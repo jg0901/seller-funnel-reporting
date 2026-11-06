@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.pytest_cache/
+data/inbox/*.csv
+data/processed/
+data/quarantine/
+output/

@@ -1,0 +1,47 @@
+# Seller Reporting MVP — runtime configuration
+paths:
+  inbox: data/inbox
+  processed: data/processed
+  quarantine: data/quarantine
+  db: output/seller_reporting.db
+  output: output
+
+# Each file type: filename pattern + required columns + the primary key used for dedupe.
+# Dates must be ISO 8601 (YYYY-MM-DD). referential: column -> (parent_table, parent_column)
+tables:
+  sourcing:
+    pattern: "sourcing_*.csv"
+    required: [seller_id, sourced_date, channel, region]
+    date_cols: [sourced_date]
+    key: [seller_id]
+    referential: {}
+  onboarding:
+    pattern: "onboarding_*.csv"
+    required: [seller_id, onboarded_date, kyc_status]
+    date_cols: [onboarded_date]
+    key: [seller_id]
+    referential:
+      seller_id: [sourcing, seller_id]
+  activation:
+    pattern: "activation_*.csv"
+    required: [seller_id, activated_date, first_listing_count]
+    date_cols: [activated_date]
+    key: [seller_id]
+    referential:
+      seller_id: [onboarding, seller_id]
+  transactions:
+    pattern: "transactions_*.csv"
+    required: [order_id, seller_id, order_date, gmv]
+    date_cols: [order_date]
+    key: [order_id]
+    referential:
+      seller_id: [activation, seller_id]
+
+kpi:
+  activation_window_days: 14   # cohort window: sourced -> activated within N days
+  cohort_grain: week           # week | day
+
+alerts:
+  # flag a file if its row count deviates more than this fraction from trailing median
+  volume_drop_threshold: 0.30
+  trailing_runs: 7
